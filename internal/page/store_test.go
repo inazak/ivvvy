@@ -114,6 +114,52 @@ func TestDelete(t *testing.T) {
 	}
 }
 
+// TestDelete_履歴保存 は、ページ削除時に最終状態が履歴に保存されることを検証する。
+func TestDelete_履歴保存(t *testing.T) {
+	store, err := NewStore(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewStore でエラー: %v", err)
+	}
+
+	store.Save(&Page{ID: "snap-target", Title: "削除テスト", Body: "最終状態の本文"})
+
+	versions, err := store.History().ListVersions("snap-target")
+	if err != nil {
+		t.Fatalf("ListVersions でエラー: %v", err)
+	}
+	if len(versions) != 0 {
+		t.Fatalf("削除前に履歴が存在する: %d件", len(versions))
+	}
+
+	if err := store.Delete("snap-target"); err != nil {
+		t.Fatalf("Delete でエラー: %v", err)
+	}
+
+	versions, err = store.History().ListVersions("snap-target")
+	if err != nil {
+		t.Fatalf("ListVersions でエラー: %v", err)
+	}
+	if len(versions) != 1 {
+		t.Fatalf("履歴の件数が不一致: got=%d, want=1", len(versions))
+	}
+
+	histPage, err := store.History().LoadVersion("snap-target", versions[0].FileName)
+	if err != nil {
+		t.Fatalf("LoadVersion でエラー: %v", err)
+	}
+	if histPage.Title != "削除テスト" {
+		t.Errorf("履歴のタイトルが不一致: got=%q, want=%q", histPage.Title, "削除テスト")
+	}
+	if histPage.Body != "最終状態の本文" {
+		t.Errorf("履歴の本文が不一致: got=%q, want=%q", histPage.Body, "最終状態の本文")
+	}
+
+	_, err = store.Get("snap-target")
+	if err == nil {
+		t.Error("削除したページが取得できてしまった")
+	}
+}
+
 // TestLoadLegacyFrontMatter は、tag/path 機能を廃止した後も、
 // 旧フロントマター（tags: / path:）を含むファイルが
 // エラーなく読み込めることを検証する（既存データ互換性）。

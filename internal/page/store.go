@@ -175,11 +175,19 @@ func (s *Store) Save(page *Page) error {
 }
 
 // Delete は指定されたIDのページファイルを削除し、キャッシュからも除去する。
+// 削除直前にファイル内容を履歴に退避する（管理者による復旧用）。
 func (s *Store) Delete(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	filePath := filepath.Join(s.dataDir, id+".md")
+
+	if oldBytes, rerr := os.ReadFile(filePath); rerr == nil && len(oldBytes) > 0 && s.history != nil {
+		if serr := s.history.Snapshot(id, oldBytes); serr != nil {
+			_ = serr
+		}
+	}
+
 	if err := os.Remove(filePath); err != nil {
 		return fmt.Errorf("ページの削除に失敗: %w", err)
 	}
