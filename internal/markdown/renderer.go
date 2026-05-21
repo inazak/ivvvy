@@ -5,7 +5,7 @@ import (
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
-	"github.com/yuin/goldmark/renderer/html"
+	// "github.com/yuin/goldmark/renderer/html"
 )
 
 // Renderer はMarkdownテキストをHTMLに変換する。
@@ -23,9 +23,11 @@ func NewRenderer() *Renderer {
 			&WikiLinkExtender{},
 			&CalloutExtender{},
 		),
-		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-		),
+		// HardWrapsを有効にするとソース上の改行がすべて<br>に変換され、
+		// CommonMark仕様の空行・末尾スペースによる改行制御が効かなくなるため無効化
+		// goldmark.WithRendererOptions(
+		// 	html.WithHardWraps(),
+		// ),
 	)
 	return &Renderer{md: md}
 }
