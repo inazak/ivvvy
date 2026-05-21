@@ -6,7 +6,7 @@ import (
 )
 
 // TestRender_基本変換 は、基本的なMarkdownがHTMLに正しく変換されることを検証する。
-func TestRender_基本変換(t *testing.T) {
+func TestRender_BasicConversion(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("# 見出し\n\nこれは段落です。\n\n- リスト項目1\n- リスト項目2\n")
@@ -58,7 +58,7 @@ func TestRender_WikiLink(t *testing.T) {
 }
 
 // TestRender_WikiLink_日本語 は、[[日本語ページ名]] が正しく変換されることを検証する。
-func TestRender_WikiLink_日本語(t *testing.T) {
+func TestRender_WikiLink_Japanese(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("[[テストページ]] を参照してください。")
@@ -74,7 +74,7 @@ func TestRender_WikiLink_日本語(t *testing.T) {
 }
 
 // TestRender_コードブロック は、コードブロックが <pre><code> に変換されることを検証する。
-func TestRender_コードブロック(t *testing.T) {
+func TestRender_CodeBlock(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("```\nfunc main() {}\n```\n")
@@ -91,7 +91,7 @@ func TestRender_コードブロック(t *testing.T) {
 
 // TestRender_WikiLink_パイプ記法 は、[[ID|表示テキスト]] 形式のWikiLinkが
 // 正しく変換されることを検証する。IDをリンク先、表示テキストをリンクテキストとして分離する。
-func TestRender_WikiLink_パイプ記法(t *testing.T) {
+func TestRender_WikiLink_PipeSyntax(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("[[1715644800000|ページタイトル]] を参照してください。")
@@ -148,7 +148,7 @@ func TestRender_Callout_note(t *testing.T) {
 
 // TestRender_Callout_カスタムタイトル は、> [!warning] タイトル 形式で
 // カスタムタイトルが反映されることを検証する。
-func TestRender_Callout_カスタムタイトル(t *testing.T) {
+func TestRender_Callout_CustomTitle(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("> [!warning] 注意してください\n> 警告の内容です。\n")
@@ -172,7 +172,7 @@ func TestRender_Callout_カスタムタイトル(t *testing.T) {
 
 // TestRender_通常Blockquote は、[!type] パターンのない通常のblockquoteが
 // Calloutに変換されずそのまま残ることを検証する。
-func TestRender_通常Blockquote(t *testing.T) {
+func TestRender_NormalBlockquote(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("> 通常の引用テキストです。\n")
@@ -198,7 +198,7 @@ func TestRender_通常Blockquote(t *testing.T) {
 // 並んだ場合、すべてが正しく変換されることを検証する。
 // ast.Walk 中に ReplaceChild でノードをツリーから外すと NextSibling が nil になり、
 // 最初の callout だけ変換されて以降の blockquote が変換されない退行が発生したことの回帰テスト。
-func TestRender_Callout_複数連続(t *testing.T) {
+func TestRender_Callout_MultipleConsecutive(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("> [!note]\n> a\n\n> [!warning]\n> b\n\n> [!tip]\n> c\n")
@@ -219,7 +219,7 @@ func TestRender_Callout_複数連続(t *testing.T) {
 // TestRender_GFMテーブル は、GitHub Flavored Markdownのテーブルが
 // <table> タグに変換されることを検証する。
 // 管理台帳など表形式のデータを記述する際に必要。
-func TestRender_GFMテーブル(t *testing.T) {
+func TestRender_GFMTable(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("| 名前 | 値 |\n|------|----|\n| A | 1 |\n| B | 2 |\n")
@@ -242,7 +242,7 @@ func TestRender_GFMテーブル(t *testing.T) {
 // WikiLinkも正しくリンク化されることを検証する。
 // テーブルのセル区切り "|" と WikiLink の表示テキスト区切り "|" の
 // 衝突を解消するための回帰テスト。
-func TestRender_WikiLink_テーブルセル内(t *testing.T) {
+func TestRender_WikiLink_InTableCell(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("| 項目 | 参照 |\n|------|------|\n| A | [[1715644800000|ページタイトル]] |\n")
@@ -280,7 +280,7 @@ func TestRender_WikiLink_テーブルセル内(t *testing.T) {
 // "|" がそのまま保持されることを検証する。
 // 前処理で "|" をプレースホルダに置換しても、コードブロック内では
 // 後処理で "|" に復元されるべき。
-func TestRender_WikiLink_コードブロック内パイプ(t *testing.T) {
+func TestRender_WikiLink_PipeInCodeBlock(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("```\n[[a|b]]\n```\n")
@@ -309,7 +309,7 @@ func TestRender_WikiLink_コードブロック内パイプ(t *testing.T) {
 
 // TestRender_WikiLink_インラインコード内パイプ は、インラインコードスパン
 // `[[a|b]]` 中の "|" がリテラルとして保持されることを検証する。
-func TestRender_WikiLink_インラインコード内パイプ(t *testing.T) {
+func TestRender_WikiLink_PipeInInlineCode(t *testing.T) {
 	r := NewRenderer()
 
 	input := []byte("インラインで `[[a|b]]` と書く。\n")
