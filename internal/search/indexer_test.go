@@ -20,7 +20,7 @@ func TestNewIndexer(t *testing.T) {
 }
 
 // TestBuildIndex_基本動作 は、ページ一覧から検索用JSONインデックスが正しく生成されることを検証する。
-func TestBuildIndex_基本動作(t *testing.T) {
+func TestBuildIndex_BasicOperation(t *testing.T) {
 	idx, err := NewIndexer()
 	if err != nil {
 		t.Fatalf("NewIndexer でエラー: %v", err)
@@ -67,7 +67,7 @@ func TestBuildIndex_基本動作(t *testing.T) {
 // TestBuildIndex_トークン化 は、日本語の本文が形態素解析によって
 // スペース区切りのトークン列に正しく変換されることを検証する。
 // 助詞・助動詞が除外され、名詞や動詞が残っていることを確認する。
-func TestBuildIndex_トークン化(t *testing.T) {
+func TestBuildIndex_Tokenization(t *testing.T) {
 	idx, err := NewIndexer()
 	if err != nil {
 		t.Fatalf("NewIndexer でエラー: %v", err)

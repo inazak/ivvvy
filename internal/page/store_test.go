@@ -9,7 +9,7 @@ import (
 
 // TestNewStore_ディレクトリ自動作成 は、存在しないディレクトリを指定した場合に
 // NewStore が自動的にディレクトリを作成することを検証する。
-func TestNewStore_ディレクトリ自動作成(t *testing.T) {
+func TestNewStore_AutoCreateDir(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "newdir")
 
 	store, err := NewStore(dir)
@@ -66,7 +66,7 @@ func TestSaveAndGet(t *testing.T) {
 }
 
 // TestList_更新日時降順 は、List() が更新日時の降順（新しい順）で返すことを検証する。
-func TestList_更新日時降順(t *testing.T) {
+func TestList_OrderByUpdatedDesc(t *testing.T) {
 	store, err := NewStore(t.TempDir())
 	if err != nil {
 		t.Fatalf("NewStore でエラー: %v", err)
@@ -115,7 +115,7 @@ func TestDelete(t *testing.T) {
 }
 
 // TestDelete_履歴保存 は、ページ削除時に最終状態が履歴に保存されることを検証する。
-func TestDelete_履歴保存(t *testing.T) {
+func TestDelete_SaveHistory(t *testing.T) {
 	store, err := NewStore(t.TempDir())
 	if err != nil {
 		t.Fatalf("NewStore でエラー: %v", err)
