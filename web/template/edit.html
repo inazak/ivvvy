@@ -1,0 +1,57 @@
+{{template "layout" .}}
+{{define "content"}}
+<div class="editor-container">
+  <h1>{{if .IsNew}}新規ページ作成{{else}}{{.Page.Title}} - 編集{{end}}</h1>
+
+  <form id="page-form">
+    {{if not .IsNew}}
+    <input type="hidden" id="page-id" value="{{.Page.ID}}">
+    {{end}}
+
+    <div class="form-group">
+      <label for="page-title">タイトル</label>
+      <input type="text" id="page-title" name="title" required
+             value="{{.Page.Title}}" placeholder="ページのタイトル">
+    </div>
+
+    <div class="form-group">
+      <label>タグ</label>
+      <div class="tag-input-container" id="tag-input-container">
+        <input type="text" id="tag-input" placeholder="タグを追加..." autocomplete="off">
+      </div>
+      <div class="tag-suggestions" id="tag-suggestions"></div>
+    </div>
+
+    <div class="form-group">
+      <label>本文（Markdown）</label>
+      <div class="tab-header">
+        <button type="button" class="tab-btn active" data-tab="edit">編集</button>
+        <button type="button" class="tab-btn" data-tab="preview">プレビュー</button>
+      </div>
+      <div id="tab-edit" class="tab-content active">
+        <textarea id="page-body" name="body" rows="20"
+                  placeholder="Markdownで記述してください...">{{.RawBody}}</textarea>
+      </div>
+      <div id="tab-preview" class="tab-content">
+        <div id="preview" class="preview-pane"></div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">保存</button>
+      {{if not .IsNew}}
+      <a href="/page/{{.Page.ID}}" class="btn">キャンセル</a>
+      <button type="button" id="delete-btn" class="btn btn-danger">削除</button>
+      {{else}}
+      <a href="/" class="btn">キャンセル</a>
+      {{end}}
+    </div>
+  </form>
+</div>
+
+<script src="/static/js/editor.js"></script>
+<script>
+  var initialTags = {{json .Page.Tags}} || [];
+  initEditor({{.IsNew}});
+</script>
+{{end}}

@@ -1,0 +1,31 @@
+{{template "layout" .}}
+{{define "content"}}
+<section>
+  <header class="page-header">
+    <div class="page-meta">
+      <span class="page-id">ID:{{.Page.ID}}</span>
+      <span class="page-meta-title">Title:{{.Page.Title}}</span>
+      <a href="/page/{{.Page.ID}}" class="history-link">最新版へ戻る</a>
+    </div>
+  </header>
+
+  <h1>変更履歴</h1>
+
+  {{if .Versions}}
+  <ul class="version-list">
+    {{range .Versions}}
+    <li>
+      {{/* ファイル名はそのまま URL に渡す（UnixMilli + ".md"）。
+           HistoryStore.LoadVersion 側で「数字.md」形式のみを許可する検証が入る。 */}}
+      <a href="/page/{{$.Page.ID}}/history/{{.FileName}}">
+        {{.Timestamp.Format "2006-01-02 15:04:05"}}
+      </a>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="empty">このページには過去バージョンがありません。<br>
+    （新規作成後、まだ一度も編集されていないか、最初の保存以降に編集がない状態です。）</p>
+  {{end}}
+</section>
+{{end}}

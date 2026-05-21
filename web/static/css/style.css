@@ -1,0 +1,1308 @@
+/* ============================================
+   Lightning — テキスト特化ドキュメント管理ツール
+   シンプルで余白のある美しいデザイン
+   ============================================ */
+
+/* --- リセットと基本設定 --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-bg: #fafafa;
+  --color-text: #333;
+  --color-text-light: #666;
+  --color-border: #e0e0e0;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-danger: #dc2626;
+  --color-code-bg: #f3f4f6;
+  --color-surface: #fff;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+  --font-mono: "SFMono-Regular", "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", "Noto Sans Mono CJK JP", "Courier New", Courier, monospace;
+  --max-width: 760px;
+  --spacing: 2rem;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- ヘッダー・ナビゲーション ---
+   `body > header` で限定し、article 内の `<header class="page-header">` には
+   背景・下線が波及しないようにする。 */
+body > header {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+nav {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1rem var(--spacing);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-links a {
+  color: var(--color-text-light);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover {
+  color: var(--color-accent);
+}
+
+/* --- キーボードショートカットの ON/OFF トグル ---
+   ヘッダ右端のキーボードアイコン。OFF時は .disabled で薄く表示する。
+   ホバー時にショートカット一覧のツールチップを即時表示する。 */
+.shortcuts-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25rem;
+}
+
+.shortcuts-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: color 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.shortcuts-toggle:hover {
+  color: var(--color-accent);
+  background: var(--color-code-bg);
+}
+
+.shortcuts-toggle.disabled {
+  opacity: 0.35;
+}
+
+.shortcuts-toggle.disabled:hover {
+  color: var(--color-text-light);
+  background: transparent;
+}
+
+/* ショートカット一覧ツールチップ。デフォルトは非表示、ホバーで即時表示する。 */
+.shortcuts-tooltip {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 20;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  padding: 0.75rem 0.9rem;
+  min-width: 240px;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  line-height: 1.6;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-2px);
+  transition: opacity 0.05s, visibility 0.05s, transform 0.05s;
+  pointer-events: none;
+}
+
+.shortcuts-wrap:hover .shortcuts-tooltip,
+.shortcuts-toggle:focus-visible + .shortcuts-tooltip,
+.shortcuts-tooltip:hover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.shortcuts-tooltip-status {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.45rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+#shortcuts-status {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.shortcuts-tooltip-hint {
+  color: var(--color-text-light);
+  margin-left: 0.25rem;
+}
+
+.shortcuts-tooltip-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shortcuts-tooltip-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+  letter-spacing: 0.04em;
+  padding: 0.45rem 0 0.2rem;
+  border-bottom: none;
+}
+
+.shortcuts-tooltip-table tr:first-child th {
+  padding-top: 0;
+}
+
+.shortcuts-tooltip-table td {
+  padding: 0.15rem 0.5rem 0.15rem 0;
+  vertical-align: middle;
+}
+
+.shortcuts-tooltip-table td:first-child {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.shortcuts-tooltip kbd {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  background: var(--color-code-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 0 0.35rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.shortcuts-tooltip-note {
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.72rem;
+  color: var(--color-text-light);
+}
+
+/* --- メインコンテンツ --- */
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--spacing);
+  width: 100%;
+  flex: 1;
+}
+
+/* --- フッター --- */
+footer {
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--color-text-light);
+  font-size: 0.8rem;
+}
+
+/* --- 見出し --- */
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.75rem;
+  line-height: 1.35;
+}
+
+h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.45;
+}
+
+h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 2.25rem;
+  margin-bottom: 0.9rem;
+  line-height: 1.5;
+}
+
+/* --- リンク --- */
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* --- ページ一覧 --- */
+.page-list {
+  list-style: none;
+}
+
+.page-list li {
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.page-list li:last-child {
+  border-bottom: none;
+}
+
+.page-list li a {
+  font-weight: 500;
+}
+
+.page-list time {
+  margin-left: auto;
+  color: var(--color-text-light);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* --- 一覧画面でのID表示（タイトル前に小さく表示） --- */
+.page-id-small {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-text-light);
+  flex-shrink: 0;
+}
+
+/* --- ページID表示（#3: 詳細ページにID表示） --- */
+.page-id {
+  color: var(--color-text-light);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+}
+
+/* --- ページ閲覧 ---
+   h1 タイトルを廃し、タグ・パス → メタ行（ID／タイトル／更新日／編集）の
+   2行構成にする。下線・背景色は持たず本文と一体化させる。 */
+.page-header {
+  margin-bottom: 1.75rem;
+}
+
+.page-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  color: var(--color-text-light);
+  font-size: 0.8rem;
+}
+
+/* メタ行の中ではタイトルも ID/日時と同じサイズで並べる */
+.page-meta-title {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.page-meta time {
+  font-size: 0.8rem;
+}
+
+.page-content {
+  line-height: 2.0;
+}
+
+.page-content p {
+  margin-bottom: 1.4rem;
+}
+
+.page-content ul,
+.page-content ol {
+  margin-bottom: 1.4rem;
+  padding-left: 1.75rem;
+}
+
+.page-content li {
+  margin-bottom: 0.5rem;
+}
+
+/* --- #9: コードブロック等幅フォント（すべてのcode/preに明示指定） --- */
+code, pre {
+  font-family: var(--font-mono);
+}
+
+.page-content pre {
+  background: var(--color-code-bg);
+  padding: 1rem 1.1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-bottom: 1.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.page-content code {
+  background: var(--color-code-bg);
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.page-content pre code {
+  background: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: inherit;
+}
+
+.page-content blockquote {
+  border-left: 3px solid var(--color-border);
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  color: var(--color-text-light);
+  margin: 0 0 1.4rem;
+}
+
+.page-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.4rem;
+}
+
+.page-content th,
+.page-content td {
+  border: 1px solid var(--color-border);
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+}
+
+.page-content th {
+  background: var(--color-code-bg);
+  font-weight: 600;
+}
+
+.page-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* --- WikiLink --- */
+.wikilink {
+  color: var(--color-accent);
+  border-bottom: 1px dashed var(--color-accent);
+}
+
+.wikilink:hover {
+  text-decoration: none;
+  border-bottom-style: solid;
+}
+
+/* --- トップページ検索ヒーロー（Googleスタイル） --- */
+.search-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 55vh;
+}
+
+.search-hero .search-container {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 0;
+}
+
+.search-logo {
+  font-size: 2.75rem;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  color: var(--color-text);
+  letter-spacing: 0.04em;
+}
+
+/* --- 検索 --- */
+.search-container {
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+#search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#search-input:focus {
+  border-color: var(--color-accent);
+}
+
+#search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  display: none;
+  z-index: 10;
+  max-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+#search-results.active {
+  display: block;
+}
+
+.search-result-item {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.search-result-item:hover {
+  background: var(--color-code-bg);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item .title {
+  font-weight: 500;
+}
+
+.search-result-item .meta {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+}
+
+/* --- #5: 検索スニペット表示 --- */
+.search-result-item .snippet {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  margin-top: 0.2rem;
+  line-height: 1.4;
+}
+
+.search-result-item .snippet mark {
+  background: #fff3cd;
+  color: var(--color-text);
+  padding: 0 0.1rem;
+  border-radius: 2px;
+}
+
+/* --- ボタン --- */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: var(--color-code-bg);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.btn-edit {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+}
+
+.btn-danger {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.btn-danger:hover {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+/* --- #2: エディタ（タブ切り替え方式） --- */
+.editor-container {
+  max-width: 100%;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.form-group input[type="text"]:focus {
+  border-color: var(--color-accent);
+}
+
+/* タブヘッダー */
+.tab-header {
+  display: flex;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: 0;
+}
+
+.tab-btn {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: none;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-btn:hover {
+  color: var(--color-text);
+}
+
+.tab-btn.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  font-weight: 500;
+}
+
+/* タブコンテンツ */
+.tab-content {
+  display: none;
+  min-height: 500px;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+#page-body {
+  width: 100%;
+  min-height: 500px;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+}
+
+#page-body:focus {
+  border-color: var(--color-accent);
+}
+
+.preview-pane {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  line-height: 1.8;
+  min-height: 500px;
+}
+
+/* プレビュー内でも等幅フォントを明示的に適用する */
+.preview-pane code,
+.preview-pane pre {
+  font-family: var(--font-mono);
+}
+
+.preview-pane pre code {
+  font-family: var(--font-mono);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* --- #6: 変更履歴 --- */
+.history-list {
+  list-style: none;
+}
+
+.history-list li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+}
+
+.history-list li:last-child {
+  border-bottom: none;
+}
+
+/* 変更履歴のメッセージ（Git廃止後はページタイトルリンクとして使用） */
+.history-message {
+  flex: 1;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+a.history-message:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.history-date {
+  color: var(--color-text-light);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* --- Obsidian/Quartz形式Callout --- */
+.callout {
+  border-left: 4px solid;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.callout-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1.4;
+}
+
+.callout-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.callout-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* 各Calloutタイプの配色 */
+.callout-note     { border-color: #2563eb; background: #eff6ff; color: #1e40af; }
+.callout-tip      { border-color: #16a34a; background: #f0fdf4; color: #166534; }
+.callout-warning  { border-color: #d97706; background: #fffbeb; color: #92400e; }
+.callout-danger   { border-color: #dc2626; background: #fef2f2; color: #991b1b; }
+.callout-info     { border-color: #0891b2; background: #ecfeff; color: #155e75; }
+.callout-example  { border-color: #7c3aed; background: #f5f3ff; color: #5b21b6; }
+.callout-quote    { border-color: #6b7280; background: #f9fafb; color: #374151; }
+.callout-abstract { border-color: #0ea5e9; background: #f0f9ff; color: #0c4a6e; }
+.callout-todo     { border-color: #16a34a; background: #f0fdf4; color: #166534; }
+.callout-bug      { border-color: #dc2626; background: #fef2f2; color: #991b1b; }
+
+/* Callout内のタイトルテキスト色は親要素のcolorを継承する */
+.callout-title span {
+  color: inherit;
+}
+
+/* Callout内のコンテンツは少し暗めのテキスト色 */
+.callout-content {
+  color: var(--color-text);
+}
+
+/* --- タグ --- */
+.page-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.tag-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.tag-chip-large {
+  font-size: 1rem;
+  padding: 0.3rem 0.9rem;
+}
+
+.tag-count {
+  display: inline-block;
+  margin-left: 0.35rem;
+  background: var(--color-code-bg);
+  color: var(--color-text-light);
+  font-size: 0.7rem;
+  padding: 0 0.4rem;
+  border-radius: 8px;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  min-height: 40px;
+  cursor: text;
+  background: var(--color-surface);
+}
+
+.tag-input-container:focus-within {
+  border-color: var(--color-accent);
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--color-code-bg);
+  color: var(--color-text);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.tag-pill-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: none;
+  color: var(--color-text-light);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.tag-pill-remove:hover {
+  color: var(--color-danger);
+}
+
+#tag-input {
+  flex: 1;
+  min-width: 100px;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0.2rem 0;
+}
+
+.tag-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.tag-suggestion {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  background: transparent;
+  font-family: var(--font-sans);
+}
+
+.tag-suggestion:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* --- 空状態 --- */
+.empty {
+  color: var(--color-text-light);
+  padding: 2rem 0;
+}
+
+/* --- バックリンク一覧 ---
+   関連ページセクションの下に表示する。区切り線で視覚的に分離する。 */
+.backlink-pages {
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* --- バックリンク内の行区切り線を消す ---
+   /pages 一覧では行区切りを残すため、
+   バックリンク内に限定して border-bottom を打ち消す。 */
+.backlink-pages .page-list li {
+  border-bottom: none;
+  padding: 0.4rem 0;
+}
+
+/* --- 履歴リンク ---
+   ページ閲覧画面のメタ情報行に置く「履歴」テキストリンク。
+   編集ボタンと並ぶが、ボタンではなく軽量なテキストリンクとして見せる。 */
+.history-link {
+  color: var(--color-text-light);
+  font-size: 0.85rem;
+  text-decoration: none;
+  margin-left: 0.5rem;
+  margin-right: 0.75rem;
+  transition: color 0.15s;
+}
+
+.history-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* --- 過去バージョン表示時のバナー ---
+   /page/{id}/history/{filename} で過去版を表示しているときに、
+   最新版ではないことを明示するバナーをページ上部に挿入する。 */
+.version-banner {
+  background: var(--color-code-bg);
+  color: var(--color-text);
+  padding: 0.8rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.version-banner a {
+  color: var(--color-accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.version-banner a:hover {
+  text-decoration: underline;
+}
+
+/* --- 履歴一覧 ---
+   /page/{id}/history のバージョン一覧を表示する。
+   各行は時刻（クリックで該当版へ遷移）を中心としたシンプルなレイアウト。 */
+.version-list {
+  list-style: none;
+  margin-top: 1.5rem;
+}
+
+.version-list li {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.version-list li:last-child {
+  border-bottom: none;
+}
+
+.version-list a {
+  color: var(--color-text);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.version-list a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* --- テキストサイズ切替 ---
+   html 要素の data-textsize 属性でルートの font-size を変更する。
+   既存CSSが rem ベースのため、ルートを変えるだけで全体に波及する。 */
+html[data-textsize="large"] {
+  font-size: 19px;
+}
+
+html[data-textsize="small"] {
+  font-size: 13px;
+}
+
+/* --- ツールバーボタン共通スタイル ---
+   テキストサイズ・カラーテーマ・キーボードショートカットのトグルアイコン共通。
+   .shortcuts-toggle と同じ見た目にする。 */
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.toolbar-btn:hover {
+  color: var(--color-accent);
+  background: var(--color-code-bg);
+}
+
+/* --- テキストサイズポップアップ --- */
+.textsize-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25rem;
+}
+
+.textsize-popup {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 20;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  padding: 0.4rem;
+  display: none;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 70px;
+}
+
+.textsize-wrap.open .textsize-popup {
+  display: flex;
+}
+
+.textsize-popup button {
+  display: block;
+  width: 100%;
+  padding: 0.35rem 0.6rem;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.textsize-popup button:hover {
+  background: var(--color-code-bg);
+}
+
+.textsize-popup button.active {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* --- カラーテーマトグル ---
+   ライトモードとダークモードを切り替えるアイコンボタン。
+   ボタン内には太陽（sun）と月（moon）の2つのSVGアイコンが格納されており、
+   data-theme の値に応じてCSSで表示を切り替える。 */
+.theme-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25rem;
+}
+
+/* デフォルト（ライトモード）: 月アイコンを表示（押すとダークモードへ） */
+.theme-icon-moon {
+  display: inline-flex;
+}
+.theme-icon-sun {
+  display: none;
+}
+
+/* ダークモード時: 太陽アイコンを表示（押すとライトモードへ） */
+html[data-theme="dark"] .theme-icon-moon {
+  display: none;
+}
+html[data-theme="dark"] .theme-icon-sun {
+  display: inline-flex;
+}
+
+/* --- カラーテーマ定義 ---
+   ライトモード（デフォルト、属性なし）とダークモードの2つのみ。
+   data-theme="dark" のときに CSS 変数を暗転スキームに上書きする。
+   将来テーマを追加できるよう、属性ベースの設計は維持している。 */
+
+/* 暗転（ダーク）モード — 中立的なグレースケール基調＋控えめなブルーアクセント */
+html[data-theme="dark"] {
+  --color-bg: #1a1a1a;
+  --color-text: #e5e5e5;
+  --color-text-light: #a0a0a0;
+  --color-border: #3a3a3a;
+  --color-accent: #6ea8ff;
+  --color-accent-hover: #8fbcff;
+  --color-danger: #f87171;
+  --color-code-bg: #2a2a2a;
+  --color-surface: #242424;
+}
+
+/* --- ダークモード: Callout配色 --- */
+html[data-theme="dark"] .callout-note     { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1);  color: #93c5fd; }
+html[data-theme="dark"] .callout-tip      { border-color: #22c55e; background: rgba(34, 197, 94, 0.1);   color: #86efac; }
+html[data-theme="dark"] .callout-warning  { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1);  color: #fcd34d; }
+html[data-theme="dark"] .callout-danger   { border-color: #ef4444; background: rgba(239, 68, 68, 0.1);   color: #fca5a5; }
+html[data-theme="dark"] .callout-info     { border-color: #06b6d4; background: rgba(6, 182, 212, 0.1);   color: #67e8f9; }
+html[data-theme="dark"] .callout-example  { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.1);  color: #c4b5fd; }
+html[data-theme="dark"] .callout-quote    { border-color: #9ca3af; background: rgba(156, 163, 175, 0.08); color: #d1d5db; }
+html[data-theme="dark"] .callout-abstract { border-color: #38bdf8; background: rgba(56, 189, 248, 0.1);  color: #7dd3fc; }
+html[data-theme="dark"] .callout-todo     { border-color: #22c55e; background: rgba(34, 197, 94, 0.1);   color: #86efac; }
+html[data-theme="dark"] .callout-bug      { border-color: #ef4444; background: rgba(239, 68, 68, 0.1);   color: #fca5a5; }
+
+/* --- レスポンシブ --- */
+@media (max-width: 768px) {
+  :root {
+    --spacing: 1rem;
+  }
+
+  .page-list li {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .page-list time {
+    margin-left: 0;
+  }
+
+  .history-list li {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* --- 印刷時のレイアウト ---
+   レポート形式として読みやすくするため、ナビ・ボタン・検索等のUIを隠し、
+   配色を白背景・黒文字に統一する。改ページが各ブロックを途中で切らないように制御。 */
+@media print {
+  :root {
+    --color-bg: #fff;
+    --color-text: #000;
+    --color-text-light: #333;
+    --color-border: #888;
+  }
+
+  html {
+    font-size: 11pt;
+    line-height: 1.7;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  /* ナビゲーション・フッター・操作系UIは印刷しない */
+  header,
+  footer,
+  .nav-links,
+  .search-container,
+  .search-hero,
+  .btn,
+  .btn-edit,
+  .form-actions,
+  #shortcuts-toggle,
+  .textsize-wrap,
+  .theme-wrap {
+    display: none !important;
+  }
+
+  /* 余白はページマージン側で取り、本文は最大幅を解除して目一杯使う */
+  main {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  @page {
+    margin: 1.2cm 1.5cm;
+  }
+
+  /* リンクは黒文字に下線、WikiLink の点線も実線にする */
+  a,
+  .wikilink {
+    color: #000;
+    text-decoration: underline;
+    border-bottom: none;
+  }
+
+  /* コード・引用は背景を抜き、枠線のみで判別 */
+  .page-content pre,
+  .page-content code,
+  .preview-pane pre,
+  .preview-pane code {
+    background: transparent !important;
+    border: 1px solid #ccc;
+  }
+
+  .page-content pre {
+    padding: 0.6rem 0.8rem;
+  }
+
+  .page-content code {
+    padding: 0 0.2rem;
+  }
+
+  .page-content blockquote {
+    border-left: 2px solid #888;
+    color: #333;
+  }
+
+  /* Callout は背景透明・枠線のみで色味は黒系に */
+  .callout {
+    background: transparent !important;
+    color: #000 !important;
+    border: 1px solid #888;
+    border-left-width: 4px;
+  }
+
+  /* 各ブロックがページ境界で切れないようにする */
+  h1, h2, h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  h2, h3, pre, table, .callout, .backlink-pages {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ページヘッダ（メタ行のみ）は本文との間に少し余白を保つ。
+     Web表示と同じく下線は引かない。 */
+  .page-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .page-meta .page-id,
+  .page-meta .page-meta-title,
+  .page-meta time {
+    color: #000;
+  }
+
+  /* 一覧画面で更新日時が右端固定だと改行で崩れるので margin-left を解除 */
+  .page-list time {
+    margin-left: 0;
+  }
+}
+
+/* --- グラフビュー ---
+   ページ間 WikiLink を可視化する画面。cytoscape.js が #cy にマウントする。
+   配色（ノード/エッジ色）は web/static/js/graph.js 側で ivy（緑）基調に揃える。 */
+.graph-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.graph-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.graph-canvas {
+  width: 100%;
+  height: calc(100vh - 200px);
+  min-height: 400px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+}
+
+@media (max-width: 768px) {
+  .graph-canvas {
+    height: calc(100vh - 160px);
+  }
+}

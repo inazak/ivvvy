@@ -1,0 +1,11 @@
+{{template "layout" .}}
+{{define "content"}}
+<section class="graph-section">
+  <div class="graph-toolbar">
+    <span class="graph-hint">ノードをクリック: ページへ移動 / ドラッグ: 移動 / ホイール: ズーム</span>
+  </div>
+  <div id="cy" class="graph-canvas"></div>
+</section>
+<script src="/static/js/cytoscape.min.js"></script>
+<script src="/static/js/graph.js"></script>
+{{end}}

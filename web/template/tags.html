@@ -1,0 +1,15 @@
+{{template "layout" .}}
+{{define "content"}}
+<section>
+  <h1>タグ一覧</h1>
+  {{if .TagCounts}}
+  <div class="tag-cloud">
+    {{range .TagCounts}}
+    <a href="/tags/{{.Name}}" class="tag-chip">{{.Name}}<span class="tag-count">{{.Count}}</span></a>
+    {{end}}
+  </div>
+  {{else}}
+  <p class="empty">タグがありません。</p>
+  {{end}}
+</section>
+{{end}}
