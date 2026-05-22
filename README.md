@@ -21,8 +21,8 @@ Markdown形式のフラットファイルをブラウザ上で閲覧・編集・
 - キーワード記法 `[[タイトル]]` を書いて保存すると、一致するページが存在する時点で `[[ID|タイトル]]` に自動書き換え
 
 ### 全文検索
-- サーバー側でkagome（IPA辞書）により形態素解析してトークン化
-- ブラウザがJSONインデックスを取得してAND方式のクライアントサイド検索を実行
+- サーバー側で全ページのタイトル・本文をJSONインデックスとして生成
+- ブラウザがJSONインデックスを取得してAND方式の部分一致検索を実行
 - 検索結果にキーワード周辺のスニペット（前後40文字）をハイライト表示
 
 ### Markdown拡張
@@ -76,7 +76,6 @@ go test ./internal/... -v
 | HTTPサーバー | net/http + go-chi/chi v5 |
 | Markdown変換 | yuin/goldmark |
 | フロントマター | go.abhg.dev/goldmark/frontmatter |
-| 形態素解析 | ikawaha/kagome v2 (IPA辞書) |
 | グラフ描画 | cytoscape.js v3（クライアントサイド） |
 | 静的アセット | Go embed |
 

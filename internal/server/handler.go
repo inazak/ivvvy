@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/inazak/ivvvy/internal/page"
+	"github.com/inazak/ivvvy/internal/search"
 )
 
 // TagCount はタグ一覧表示用のタグ名とページ数のペア。
@@ -245,7 +246,7 @@ func (s *Server) handleSearchIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := s.indexer.BuildIndex(pages)
+	data, err := search.BuildIndex(pages)
 	if err != nil {
 		http.Error(w, "インデックスの生成に失敗しました", http.StatusInternalServerError)
 		return

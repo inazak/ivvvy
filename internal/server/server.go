@@ -16,14 +16,12 @@ import (
 
 	"github.com/inazak/ivvvy/internal/markdown"
 	"github.com/inazak/ivvvy/internal/page"
-	"github.com/inazak/ivvvy/internal/search"
 )
 
 // Server はHTTPサーバー。ページの閲覧・編集・検索機能を提供する。
 type Server struct {
 	store    *page.Store
 	renderer *markdown.Renderer
-	indexer  *search.Indexer
 
 	templateFS fs.FS
 
@@ -66,11 +64,6 @@ func New(cfg Config) (*Server, error) {
 		return nil, fmt.Errorf("ページストアの初期化に失敗: %w", err)
 	}
 
-	indexer, err := search.NewIndexer()
-	if err != nil {
-		return nil, fmt.Errorf("検索インデクサーの初期化に失敗: %w", err)
-	}
-
 	// CIDR 表記ミスは起動時に検出して即エラーにする（運用中の意図せぬ全許可を防ぐ）。
 	allowNets := make([]*net.IPNet, 0, len(cfg.AllowIPs))
 	for _, s := range cfg.AllowIPs {
@@ -98,7 +91,6 @@ func New(cfg Config) (*Server, error) {
 	return &Server{
 		store:         store,
 		renderer:      markdown.NewRenderer(),
-		indexer:       indexer,
 		templateFS:    cfg.TemplateFS,
 		templateCache: make(map[string]*template.Template),
 		staticFS:      cfg.StaticFS,
