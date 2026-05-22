@@ -18,6 +18,7 @@ import (
 	"github.com/inazak/ivvvy/internal/page"
 	"github.com/inazak/ivvvy/internal/search"
 	"github.com/inazak/ivvvy/internal/server"
+
 )
 
 // GeneratorConfig は静的サイト生成に必要な設定をまとめた構造体。
@@ -32,7 +33,6 @@ type GeneratorConfig struct {
 type Generator struct {
 	store      *page.Store
 	renderer   *markdown.Renderer
-	indexer    *search.Indexer
 	templateFS fs.FS
 	staticFS   fs.FS
 	outputDir  string
@@ -45,15 +45,9 @@ func NewGenerator(cfg GeneratorConfig) (*Generator, error) {
 		return nil, fmt.Errorf("ページストアの初期化に失敗: %w", err)
 	}
 
-	indexer, err := search.NewIndexer()
-	if err != nil {
-		return nil, fmt.Errorf("検索インデクサーの初期化に失敗: %w", err)
-	}
-
 	return &Generator{
 		store:      store,
 		renderer:   markdown.NewRenderer(),
-		indexer:    indexer,
 		templateFS: cfg.TemplateFS,
 		staticFS:   cfg.StaticFS,
 		outputDir:  cfg.OutputDir,
@@ -159,7 +153,7 @@ func (g *Generator) generateGraphPage() error {
 
 // generateSearchIndex は検索用のインデックスJSONファイルを生成する。
 func (g *Generator) generateSearchIndex(pages []*page.Page) error {
-	data, err := g.indexer.BuildIndex(pages)
+	data, err := search.BuildIndex(pages)
 	if err != nil {
 		return fmt.Errorf("検索インデックスの生成に失敗: %w", err)
 	}

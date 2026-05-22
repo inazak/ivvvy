@@ -1,7 +1,6 @@
 // search.js — クライアントサイド全文検索
-// サーバー側で kagome（形態素解析）によりトークン化されたインデックスJSONを取得し、
-// ブラウザ上で検索を実行する。外部ライブラリには依存せず、
-// AND方式の部分一致検索を実装している。
+// サーバー側で生成されたインデックスJSONを取得し、
+// ブラウザ上でAND方式の部分一致検索を実行する。
 // 検索結果にはキーワード周辺の文字列（スニペット）も表示する。
 
 (function() {
@@ -16,7 +15,6 @@
   if (!input || !results) return;
 
   // サーバーから検索インデックスJSONを取得する。
-  // インデックスは全ページの本文をトークン化したデータ。
   fetch('/search/index.json')
     .then(function(res) { return res.json(); })
     .then(function(data) {
@@ -80,10 +78,8 @@
     var matched = [];
     for (var i = 0; i < searchIndex.length; i++) {
       var entry = searchIndex[i];
-      // タイトル・トークン・本文を結合した検索対象文字列を作る。
-      // 本文（原文）を含めることで、kagome が分割してしまう英数字混在の文字列
-      // （例: "yctbdc12" → "yctbdc 12"）も部分一致できるようにする。
-      var haystack = (entry.title + ' ' + entry.tokens + ' ' + entry.body).toLowerCase();
+      // タイトルと本文を結合した検索対象文字列を作る。
+      var haystack = (entry.title + ' ' + entry.body).toLowerCase();
 
       // すべてのキーワードが含まれているかチェックする（AND検索）
       var allMatch = true;
