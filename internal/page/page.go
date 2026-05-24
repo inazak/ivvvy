@@ -29,6 +29,8 @@ type Page struct {
 // 過去に存在した tags / path 等の未知キーは goldmark/frontmatter の
 // デフォルト挙動で自動的に無視されるため、互換性に問題はない。
 type FrontMatter struct {
-	Title string   `yaml:"title"`
-	Tags  []string `yaml:"tags"`
+	Title   string     `yaml:"title"`
+	Tags    []string   `yaml:"tags"`
+	Created *time.Time `yaml:"created,omitempty"`
+	Update  *time.Time `yaml:"update,omitempty"`
 }
