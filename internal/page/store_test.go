@@ -3,6 +3,7 @@ package page
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -195,6 +196,129 @@ path: "/old/path"
 	}
 	if got.Body == "" {
 		t.Error("Body が空")
+	}
+}
+
+// TestFrontMatterTimestamp_Created_Update は、frontmatter に created/update が
+// 含まれるファイルを読み込んだ際に、ファイルシステムの ModTime ではなく
+// frontmatter の値が CreatedAt/UpdatedAt として使われることを検証する。
+func TestFrontMatterTimestamp_Created_Update(t *testing.T) {
+	dir := t.TempDir()
+
+	content := `---
+title: "タイムスタンプテスト"
+created: "2020-01-15T10:30:00+09:00"
+update: "2024-06-20T14:00:00+09:00"
+---
+
+本文です。
+`
+	if err := os.WriteFile(filepath.Join(dir, "ts-test.md"), []byte(content), 0644); err != nil {
+		t.Fatalf("ファイルの作成に失敗: %v", err)
+	}
+
+	store, err := NewStore(dir)
+	if err != nil {
+		t.Fatalf("NewStore でエラー: %v", err)
+	}
+
+	got, err := store.Get("ts-test")
+	if err != nil {
+		t.Fatalf("Get でエラー: %v", err)
+	}
+
+	wantCreated := time.Date(2020, 1, 15, 10, 30, 0, 0, time.FixedZone("", 9*3600))
+	wantUpdated := time.Date(2024, 6, 20, 14, 0, 0, 0, time.FixedZone("", 9*3600))
+
+	if !got.CreatedAt.Equal(wantCreated) {
+		t.Errorf("CreatedAt が不一致: got=%v, want=%v", got.CreatedAt, wantCreated)
+	}
+	if !got.UpdatedAt.Equal(wantUpdated) {
+		t.Errorf("UpdatedAt が不一致: got=%v, want=%v", got.UpdatedAt, wantUpdated)
+	}
+}
+
+// TestFrontMatterTimestamp_Fallback は、frontmatter に created/update がない
+// 既存ファイルの場合にファイルの ModTime にフォールバックすることを検証する。
+func TestFrontMatterTimestamp_Fallback(t *testing.T) {
+	dir := t.TempDir()
+
+	content := `---
+title: "フォールバックテスト"
+---
+
+本文です。
+`
+	if err := os.WriteFile(filepath.Join(dir, "fb-test.md"), []byte(content), 0644); err != nil {
+		t.Fatalf("ファイルの作成に失敗: %v", err)
+	}
+
+	store, err := NewStore(dir)
+	if err != nil {
+		t.Fatalf("NewStore でエラー: %v", err)
+	}
+
+	got, err := store.Get("fb-test")
+	if err != nil {
+		t.Fatalf("Get でエラー: %v", err)
+	}
+
+	if got.CreatedAt.IsZero() {
+		t.Error("CreatedAt がゼロ値（ModTime フォールバックが動いていない）")
+	}
+	if got.UpdatedAt.IsZero() {
+		t.Error("UpdatedAt がゼロ値（ModTime フォールバックが動いていない）")
+	}
+}
+
+// TestSave_WritesTimestampToFrontMatter は、Save 後のファイルに
+// created/update フィールドが正しく書き込まれることを検証する。
+func TestSave_WritesTimestampToFrontMatter(t *testing.T) {
+	store, err := NewStore(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewStore でエラー: %v", err)
+	}
+
+	now := time.Now()
+	p := &Page{
+		ID:        "save-ts",
+		Title:     "保存テスト",
+		Body:      "本文",
+		CreatedAt: now.Add(-24 * time.Hour),
+		UpdatedAt: now,
+	}
+	if err := store.Save(p); err != nil {
+		t.Fatalf("Save でエラー: %v", err)
+	}
+
+	data, err := os.ReadFile(store.FilePath("save-ts"))
+	if err != nil {
+		t.Fatalf("ファイル読み込みに失敗: %v", err)
+	}
+	content := string(data)
+
+	if !strings.Contains(content, "created:") {
+		t.Error("保存されたファイルに created フィールドがない")
+	}
+	if !strings.Contains(content, "update:") {
+		t.Error("保存されたファイルに update フィールドがない")
+	}
+
+	// 再読み込みしてタイムスタンプが保持されることを確認
+	store2, err := NewStore(store.DataDir())
+	if err != nil {
+		t.Fatalf("再読み込みの NewStore でエラー: %v", err)
+	}
+	got, err := store2.Get("save-ts")
+	if err != nil {
+		t.Fatalf("再読み込み後の Get でエラー: %v", err)
+	}
+
+	if !got.CreatedAt.Equal(p.CreatedAt.Truncate(time.Second)) {
+		t.Errorf("再読み込み後の CreatedAt が不一致: got=%v, want=%v", got.CreatedAt, p.CreatedAt)
+	}
+	if !got.UpdatedAt.Equal(p.UpdatedAt.Truncate(time.Second)) {
+		t.Errorf("再読み込み後の UpdatedAt が不一致: got=%v, want=%v", got.UpdatedAt, p.UpdatedAt)
 	}
 }
 

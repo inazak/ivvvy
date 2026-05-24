@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"go.abhg.dev/goldmark/frontmatter"
 	"github.com/yuin/goldmark"
@@ -154,6 +155,8 @@ func (s *Store) Save(page *Page) error {
 			buf.WriteString(fmt.Sprintf("  - %q\n", tag))
 		}
 	}
+	buf.WriteString(fmt.Sprintf("created: %q\n", page.CreatedAt.Format(time.RFC3339)))
+	buf.WriteString(fmt.Sprintf("update: %q\n", page.UpdatedAt.Format(time.RFC3339)))
 	buf.WriteString("---\n\n")
 	buf.WriteString(page.Body)
 
@@ -162,10 +165,11 @@ func (s *Store) Save(page *Page) error {
 	}
 
 	cached := s.copyPage(page)
-	info, err := os.Stat(filePath)
-	if err == nil {
-		cached.UpdatedAt = info.ModTime()
-		cached.CreatedAt = info.ModTime()
+	if cached.CreatedAt.IsZero() {
+		cached.CreatedAt = time.Now()
+	}
+	if cached.UpdatedAt.IsZero() {
+		cached.UpdatedAt = time.Now()
 	}
 	s.cache[page.ID] = cached
 
@@ -245,13 +249,22 @@ func (s *Store) loadPageFromDisk(id string) (*Page, error) {
 		title = id
 	}
 
+	createdAt := info.ModTime()
+	updatedAt := info.ModTime()
+	if fm.Created != nil {
+		createdAt = *fm.Created
+	}
+	if fm.Update != nil {
+		updatedAt = *fm.Update
+	}
+
 	return &Page{
 		ID:        id,
 		Title:     title,
 		Body:      body,
 		Tags:      fm.Tags,
-		CreatedAt: info.ModTime(),
-		UpdatedAt: info.ModTime(),
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
 	}, nil
 }
 
