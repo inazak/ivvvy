@@ -331,3 +331,79 @@ func TestRender_WikiLink_PipeInInlineCode(t *testing.T) {
 		t.Errorf("プレースホルダ \\x1F が出力に残っている: %q", result)
 	}
 }
+
+// TestRender_WikiLink_XSS_Target は、WikiLinkのターゲットにHTMLインジェクションを
+// 含む入力が正しくエスケープされることを検証する。
+func TestRender_WikiLink_XSS_Target(t *testing.T) {
+	r := NewRenderer()
+
+	input := []byte(`[[foo" onclick="alert(1)|click me]]`)
+	html, err := r.Render(input)
+	if err != nil {
+		t.Fatalf("Render でエラー: %v", err)
+	}
+
+	result := string(html)
+
+	// ダブルクォートがエスケープされてhref属性の外に出られないこと
+	// html.EscapeString は " を &#34; にエスケープする
+	if !strings.Contains(result, `&#34;`) {
+		t.Errorf("ダブルクォートがエスケープされていない: %s", result)
+	}
+	// エスケープ前の生の " がターゲット部分に残っていないことを確認する
+	// （&#34; にエスケープされているので、属性値から抜け出せない）
+	if strings.Contains(result, `href="/page/foo"`) {
+		t.Errorf("ダブルクォートがエスケープされずhref属性が途中で閉じてしまった（XSS脆弱性）: %s", result)
+	}
+	// エスケープ後の正しいhref属性値を確認する
+	if !strings.Contains(result, `href="/page/foo&#34; onclick=&#34;alert(1)"`) {
+		t.Errorf("hrefの値が正しくエスケープされていない: %s", result)
+	}
+}
+
+// TestRender_WikiLink_XSS_DisplayText は、WikiLinkの表示テキストにスクリプトタグを
+// 含む入力が正しくエスケープされることを検証する。
+func TestRender_WikiLink_XSS_DisplayText(t *testing.T) {
+	r := NewRenderer()
+
+	input := []byte(`[[target|<script>alert(1)</script>]]`)
+	html, err := r.Render(input)
+	if err != nil {
+		t.Fatalf("Render でエラー: %v", err)
+	}
+
+	result := string(html)
+
+	// <script> タグがエスケープされていること
+	if strings.Contains(result, "<script>") {
+		t.Errorf("<script> タグがそのまま出力されてしまった（XSS脆弱性）: %s", result)
+	}
+	if !strings.Contains(result, "&lt;script&gt;") {
+		t.Errorf("<script> が &lt;script&gt; にエスケープされていない: %s", result)
+	}
+}
+
+// TestRender_Callout_XSS_Title は、CalloutのタイトルにHTMLインジェクションを
+// 含む入力が正しくエスケープされることを検証する。
+// goldmarkが <img> 等のHTMLタグをインラインHTMLとして解釈するため、
+// テスト入力にはgoldmarkが素通しするテキストベースのペイロードを使う。
+func TestRender_Callout_XSS_Title(t *testing.T) {
+	r := NewRenderer()
+
+	input := []byte("> [!note] test\"onmouseover=\"alert(1)\n> 内容\n")
+	html, err := r.Render(input)
+	if err != nil {
+		t.Fatalf("Render でエラー: %v", err)
+	}
+
+	result := string(html)
+
+	// ダブルクォートがエスケープされていること
+	if strings.Contains(result, `<span>test"`) {
+		t.Errorf("ダブルクォートがエスケープされずにspan内に出力されてしまった（XSS脆弱性）: %s", result)
+	}
+	// html.EscapeString は " を &#34; にエスケープする
+	if !strings.Contains(result, `&#34;`) {
+		t.Errorf("ダブルクォートが &#34; にエスケープされていない: %s", result)
+	}
+}

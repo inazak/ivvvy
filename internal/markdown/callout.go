@@ -2,6 +2,7 @@ package markdown
 
 import (
 	"fmt"
+	"html"
 	"regexp"
 	"strings"
 
@@ -215,13 +216,13 @@ func (r *calloutHTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegiste
 func (r *calloutHTMLRenderer) renderCallout(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	n := node.(*Callout)
 	if entering {
-		w.WriteString(fmt.Sprintf(`<div class="callout callout-%s">`, n.CalloutType))
+		w.WriteString(fmt.Sprintf(`<div class="callout callout-%s">`, html.EscapeString(n.CalloutType)))
 		w.WriteByte('\n')
 		w.WriteString(`<div class="callout-title">`)
 		if icon, ok := calloutIcons[n.CalloutType]; ok {
 			w.WriteString(icon)
 		}
-		w.WriteString(fmt.Sprintf(`<span>%s</span>`, n.Title))
+		w.WriteString(fmt.Sprintf(`<span>%s</span>`, html.EscapeString(n.Title)))
 		w.WriteString("</div>\n")
 		w.WriteString(`<div class="callout-content">`)
 		w.WriteByte('\n')
