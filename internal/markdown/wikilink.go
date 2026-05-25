@@ -2,6 +2,7 @@ package markdown
 
 import (
 	"bytes"
+	"html"
 	"strings"
 
 	"github.com/yuin/goldmark"
@@ -167,9 +168,9 @@ func (r *wikiLinkHTMLRenderer) renderWikiLink(w util.BufWriter, source []byte, n
 	if entering {
 		n := node.(*WikiLink)
 		w.WriteString(`<a href="/page/`)
-		w.WriteString(n.Target)
+		w.WriteString(html.EscapeString(n.Target))
 		w.WriteString(`" class="wikilink">`)
-		w.WriteString(n.DisplayText)
+		w.WriteString(html.EscapeString(n.DisplayText))
 	} else {
 		w.WriteString(`</a>`)
 	}
