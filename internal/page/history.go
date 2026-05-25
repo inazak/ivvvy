@@ -71,7 +71,7 @@ func (h *HistoryStore) Snapshot(id string, fileBytes []byte) error {
 		filename := strconv.FormatInt(ts, 10) + ".md"
 		full := filepath.Join(dir, filename)
 		if _, err := os.Stat(full); os.IsNotExist(err) {
-			if werr := os.WriteFile(full, fileBytes, 0644); werr != nil {
+			if werr := writeFileAtomic(full, fileBytes, 0644); werr != nil {
 				return fmt.Errorf("履歴ファイルの書き込みに失敗: %w", werr)
 			}
 			return nil

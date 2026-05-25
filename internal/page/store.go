@@ -160,7 +160,7 @@ func (s *Store) Save(page *Page) error {
 	buf.WriteString("---\n\n")
 	buf.WriteString(page.Body)
 
-	if err := os.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
+	if err := writeFileAtomic(filePath, buf.Bytes(), 0644); err != nil {
 		return fmt.Errorf("ページの保存に失敗: %w", err)
 	}
 
@@ -472,6 +472,48 @@ func (s *Store) BuildGraph() ([]GraphNode, []GraphEdge) {
 	})
 
 	return nodes, edges
+}
+
+// writeFileAtomic はファイルをアトミックに書き込む。
+// 一時ファイルに書き込み後、リネームで置換することで
+// クラッシュ時にファイルが中途半端な状態になることを防ぐ。
+func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".ivvvy-tmp-*")
+	if err != nil {
+		return fmt.Errorf("一時ファイルの作成に失敗: %w", err)
+	}
+	tmpPath := tmp.Name()
+
+	// 失敗時のクリーンアップ
+	defer func() {
+		if tmpPath != "" {
+			os.Remove(tmpPath)
+		}
+	}()
+
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return fmt.Errorf("一時ファイルへの書き込みに失敗: %w", err)
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return fmt.Errorf("一時ファイルの同期に失敗: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("一時ファイルのクローズに失敗: %w", err)
+	}
+
+	if err := os.Chmod(tmpPath, perm); err != nil {
+		return fmt.Errorf("パーミッションの設定に失敗: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, path); err != nil {
+		return fmt.Errorf("ファイルの置換に失敗: %w", err)
+	}
+
+	tmpPath = "" // クリーンアップ不要
+	return nil
 }
 
 // GetBacklinks は指定ページへのバックリンク元ページ一覧を返す。
