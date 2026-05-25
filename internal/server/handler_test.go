@@ -34,6 +34,43 @@ func newTestServer(t *testing.T) *Server {
 	}
 }
 
+// TestMaxBodySizeMiddleware は、10MBを超えるリクエストボディが拒否されることを検証する。
+func TestMaxBodySizeMiddleware(t *testing.T) {
+	srv := newTestServer(t)
+
+	r := srv.routes()
+
+	// 10MB + 1 バイトのボディを生成する
+	oversize := strings.Repeat("a", 10*1024*1024+1)
+	body := `{"title":"test","body":"` + oversize + `"}`
+
+	req := httptest.NewRequest(http.MethodPost, "/api/page", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("10MBを超えるリクエストが拒否されなかった: got=%d, want=%d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+// TestMaxBodySizeAllowsNormalRequest は、10MB以下のリクエストが正常に処理されることを検証する。
+func TestMaxBodySizeAllowsNormalRequest(t *testing.T) {
+	srv := newTestServer(t)
+
+	r := srv.routes()
+
+	body := `{"title":"テストページ","body":"正常なサイズのボディ"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/page", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("正常サイズのリクエストが失敗した: got=%d, want=%d, body=%s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+}
+
 // TestHandleGraphView は、/graph 画面のHTMLが正しくレンダリングされ、
 // cytoscape.js と graph.js のスクリプト参照を含むことを検証する。
 func TestHandleGraphView(t *testing.T) {

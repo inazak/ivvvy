@@ -127,6 +127,7 @@ func (s *Server) routes() *chi.Mux {
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(maxBodySize(10 * 1024 * 1024)) // 10MB
 
 	if len(s.allowNets) > 0 {
 		r.Use(s.ipAllowMiddleware)
@@ -162,6 +163,19 @@ func (s *Server) routes() *chi.Mux {
 	r.Get("/api/tags", s.handleAPITags)
 
 	return r
+}
+
+// maxBodySize はリクエストボディのサイズ上限を適用するミドルウェア。
+// 上限を超えた場合、http.MaxBytesReader がエラーを返し json.Decode 等で検出される。
+func maxBodySize(limit int64) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Body != nil && r.ContentLength != 0 {
+				r.Body = http.MaxBytesReader(w, r.Body, limit)
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // ipAllowMiddleware はリモートIPが allowNets のいずれかに含まれる場合のみ
