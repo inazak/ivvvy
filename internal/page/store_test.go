@@ -161,6 +161,81 @@ func TestDelete_SaveHistory(t *testing.T) {
 	}
 }
 
+// TestHistoryFilenameFormat は、履歴ファイル名が "{ID}-rev-{UnixMilli}.md" 形式で
+// 生成されることを検証する。
+func TestHistoryFilenameFormat(t *testing.T) {
+	store, err := NewStore(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewStore でエラー: %v", err)
+	}
+
+	// 初回保存（履歴なし）
+	store.Save(&Page{ID: "1715644800000", Title: "テスト", Body: "v1"})
+
+	// 2回目の保存で履歴が1件できる
+	time.Sleep(10 * time.Millisecond)
+	store.Save(&Page{ID: "1715644800000", Title: "テスト", Body: "v2"})
+
+	versions, err := store.History().ListVersions("1715644800000")
+	if err != nil {
+		t.Fatalf("ListVersions でエラー: %v", err)
+	}
+	if len(versions) != 1 {
+		t.Fatalf("履歴の件数が不一致: got=%d, want=1", len(versions))
+	}
+
+	fn := versions[0].FileName
+	if !strings.HasPrefix(fn, "1715644800000-rev-") {
+		t.Errorf("ファイル名が '1715644800000-rev-' で始まっていない: %q", fn)
+	}
+	if !strings.HasSuffix(fn, ".md") {
+		t.Errorf("ファイル名が '.md' で終わっていない: %q", fn)
+	}
+
+	// LoadVersion でも読めることを確認
+	histPage, err := store.History().LoadVersion("1715644800000", fn)
+	if err != nil {
+		t.Fatalf("LoadVersion でエラー: %v", err)
+	}
+	if histPage.Body != "v1" {
+		t.Errorf("履歴の本文が不一致: got=%q, want=%q", histPage.Body, "v1")
+	}
+}
+
+// TestHistoryIgnoresLegacyFilename は、旧形式の履歴ファイル名（"{timestamp}.md"）が
+// ListVersions で無視されることを検証する。
+func TestHistoryIgnoresLegacyFilename(t *testing.T) {
+	dir := t.TempDir()
+	store, err := NewStore(dir)
+	if err != nil {
+		t.Fatalf("NewStore でエラー: %v", err)
+	}
+
+	// ページを作成
+	store.Save(&Page{ID: "mypage", Title: "テストページ", Body: "本文"})
+
+	// 旧形式の履歴ファイルを手動で配置
+	histDir := filepath.Join(dir, "history", "mypage")
+	os.MkdirAll(histDir, 0755)
+	legacyContent := []byte("---\ntitle: \"旧バージョン\"\n---\n\n旧本文")
+	os.WriteFile(filepath.Join(histDir, "1700000000000.md"), legacyContent, 0644)
+
+	// ListVersions は旧形式をスキップするため、0件のはず
+	versions, err := store.History().ListVersions("mypage")
+	if err != nil {
+		t.Fatalf("ListVersions でエラー: %v", err)
+	}
+	if len(versions) != 0 {
+		t.Fatalf("旧形式が無視されていない: got=%d, want=0", len(versions))
+	}
+
+	// LoadVersion も旧形式を拒否する
+	_, err = store.History().LoadVersion("mypage", "1700000000000.md")
+	if err == nil {
+		t.Error("旧形式のファイル名が LoadVersion で受け入れられてしまった")
+	}
+}
+
 // TestLoadLegacyFrontMatter は、tag/path 機能を廃止した後も、
 // 旧フロントマター（tags: / path:）を含むファイルが
 // エラーなく読み込めることを検証する（既存データ互換性）。
