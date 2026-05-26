@@ -67,7 +67,7 @@ ivvvy/
 └── data/                      # Markdownファイル保存先
     └── history/               # 過去バージョン保管
         └── {pageID}/
-            └── {UnixMilli}.md
+            └── {pageID}-rev-{UnixMilli}.md
 ```
 
 ## 起動方法
@@ -407,7 +407,7 @@ ivvvy のページIDは「ファイル名にもなるミリ秒タイムスタン
 
 ## ページ単位の版管理
 
-各ページの保存時に「上書き直前の内容」をタイムスタンプ付きで `history/{ID}/{UnixMilli}.md` として保存する。
+各ページの保存時に「上書き直前の内容」を `history/{ID}/{ID}-rev-{UnixMilli}.md` として保存する。ファイル名にページIDを含めることで、ディレクトリ構造に依存せずファイル単体で出自を識別できる。
 
 #### ディレクトリ構造
 
@@ -416,8 +416,8 @@ ivvvy のページIDは「ファイル名にもなるミリ秒タイムスタン
 ├── {pageID}.md                  # 現行（最新）バージョン
 └── history/
     └── {pageID}/
-        ├── 1734567890123.md     # 過去バージョン（タイムスタンプ降順表示）
-        ├── 1734567990456.md
+        ├── {pageID}-rev-1734567890123.md     # 過去バージョン（タイムスタンプ降順表示）
+        ├── {pageID}-rev-1734567990456.md
         └── ...
 ```
 
@@ -426,9 +426,9 @@ ivvvy のページIDは「ファイル名にもなるミリ秒タイムスタン
 - 新規型 `internal/page/history.go` の `HistoryStore` が版管理を担当する。`Snapshot` / `ListVersions` / `LoadVersion` の3メソッドを提供
 - `Store.Save` 内で上書き直前に既存ファイルを読み出し、`HistoryStore.Snapshot` を呼んで退避する
 - 新規作成（既存ファイルなし）時は退避をスキップ＝初回保存では履歴ゼロ件
-- ファイル名は `time.Now().UnixMilli()` ベース。同一ミリ秒で衝突した場合は 1ms ずつインクリメントして空きを探す
+- ファイル名は `{pageID}-rev-{time.Now().UnixMilli()}.md` 形式。同一ミリ秒で衝突した場合は 1ms ずつインクリメントして空きを探す
 - フロントマターのパースは `Store.loadPageFromDisk` から共通ヘルパー `parsePageBytes` に切り出し、`HistoryStore.LoadVersion` でも再利用する
-- セキュリティ: `LoadVersion` の `filename` 引数は「数字.md」形式のみ許可し、ディレクトリトラバーサルを防ぐ
+- セキュリティ: `LoadVersion` の `filename` 引数は正規表現 `^[a-zA-Z0-9_-]+-rev-\d+\.md$` で検証し、ディレクトリトラバーサルを防ぐ
 
 #### ルーティング・テンプレート
 

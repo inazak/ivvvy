@@ -15,8 +15,8 @@
   <ul class="version-list">
     {{range .Versions}}
     <li>
-      {{/* ファイル名はそのまま URL に渡す（UnixMilli + ".md"）。
-           HistoryStore.LoadVersion 側で「数字.md」形式のみを許可する検証が入る。 */}}
+      {{/* ファイル名はそのまま URL に渡す（{ID}-rev-{UnixMilli}.md 形式）。
+           HistoryStore.LoadVersion 側で正規表現による形式検証が入る。 */}}
       <a href="/page/{{$.Page.ID}}/history/{{.FileName}}">
         {{.Timestamp.Format "2006-01-02 15:04:05"}}
       </a>

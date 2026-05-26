@@ -151,7 +151,7 @@ func (s *Server) handlePageNew(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePageHistory はページの過去バージョン一覧を表示する。
-// 履歴ファイルは {dataDir}/history/{ID}/{TIMESTAMP}.md として保管されている。
+// 履歴ファイルは {dataDir}/history/{ID}/{ID}-rev-{TIMESTAMP}.md として保管されている。
 func (s *Server) handlePageHistory(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 

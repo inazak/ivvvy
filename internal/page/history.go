@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,13 +12,30 @@ import (
 	"time"
 )
 
+// validHistoryFile は履歴ファイル名 "{id}-rev-{timestamp}.md" の形式を検証する正規表現。
+// ディレクトリトラバーサル防御を兼ねる（英数字・ハイフン・アンダースコア・".md" のみ許可）。
+var validHistoryFile = regexp.MustCompile(`^[a-zA-Z0-9_-]+-rev-\d+\.md$`)
+
+// parseHistoryTimestamp は履歴ファイル名からタイムスタンプ（UnixMilli）を抽出する。
+// "{id}-rev-{timestamp}.md" 形式のみ受け付け、それ以外は (0, false) を返す。
+func parseHistoryTimestamp(name string) (int64, bool) {
+	base := strings.TrimSuffix(name, ".md")
+	idx := strings.LastIndex(base, "-rev-")
+	if idx < 0 {
+		return 0, false
+	}
+	ms, err := strconv.ParseInt(base[idx+5:], 10, 64)
+	return ms, err == nil
+}
+
 // HistoryStore はページの版管理（過去ファイルの保管・参照）を担当する。
 //
 // ファイル構造:
 //
-//	{baseDir}/{ID}/{UnixMilliTimestamp}.md
+//	{baseDir}/{ID}/{ID}-rev-{UnixMilliTimestamp}.md
 //
-// ファイル名は UnixMilli タイムスタンプで、ファイル本体はフロントマター込みの
+// ファイル名にページIDを含めることで、ディレクトリ構造に依存せずファイル単体で
+// 「どのページの履歴か」を識別できる。ファイル本体はフロントマター込みの
 // 完全な .md ファイル（Store.Save が書き出す形式と同じ）。
 type HistoryStore struct {
 	baseDir string
@@ -29,7 +47,7 @@ type HistoryStore struct {
 
 // VersionEntry はある1つの過去バージョンを表す構造体。
 type VersionEntry struct {
-	// FileName はディレクトリ内のファイル名（拡張子含む）。例: "1734567890123.md"
+	// FileName はディレクトリ内のファイル名（拡張子含む）。例: "1715644800000-rev-1734567890123.md"
 	FileName string
 
 	// Timestamp はファイル名から解釈した時刻（UnixMilli から復元）。
@@ -47,7 +65,7 @@ func NewHistoryStore(baseDir string) (*HistoryStore, error) {
 // Snapshot は指定IDの「現在の」ファイル内容を1つの版として保存する。
 // Store.Save の「上書き直前」のタイミングで呼ばれることを想定している。
 //
-// ファイル名は現在時刻（UnixMilli）をベースとする。同一ミリ秒内に
+// ファイル名は "{id}-rev-{UnixMilli}.md" 形式。同一ミリ秒内に
 // 衝突した場合は 1ms ずつインクリメントして空いている名前を探す。
 // fileBytes が空の場合は何もしない（新規作成時には版を残さない）。
 func (h *HistoryStore) Snapshot(id string, fileBytes []byte) error {
@@ -68,7 +86,7 @@ func (h *HistoryStore) Snapshot(id string, fileBytes []byte) error {
 
 	ts := time.Now().UnixMilli()
 	for {
-		filename := strconv.FormatInt(ts, 10) + ".md"
+		filename := id + "-rev-" + strconv.FormatInt(ts, 10) + ".md"
 		full := filepath.Join(dir, filename)
 		if _, err := os.Stat(full); os.IsNotExist(err) {
 			if werr := writeFileAtomic(full, fileBytes, 0644); werr != nil {
@@ -98,12 +116,11 @@ func (h *HistoryStore) ListVersions(id string) ([]VersionEntry, error) {
 
 	versions := make([]VersionEntry, 0, len(entries))
 	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
+		if e.IsDir() || !validHistoryFile.MatchString(e.Name()) {
 			continue
 		}
-		base := strings.TrimSuffix(e.Name(), ".md")
-		ms, perr := strconv.ParseInt(base, 10, 64)
-		if perr != nil {
+		ms, ok := parseHistoryTimestamp(e.Name())
+		if !ok {
 			continue
 		}
 		versions = append(versions, VersionEntry{
@@ -122,17 +139,17 @@ func (h *HistoryStore) ListVersions(id string) ([]VersionEntry, error) {
 // LoadVersion は指定IDの指定ファイル名のバージョンを Page として読み込む。
 // 過去のフロントマター+本文をパースして当時のタイトルを再現する。
 //
-// セキュリティ: filename はディレクトリトラバーサル回避のため「数字.md」形式のみ許可する。
+// セキュリティ: filename はディレクトリトラバーサル回避のため
+// "{数字}-rev-{数字}.md" 形式のみ許可する（validHistoryFile 正規表現で検証）。
 func (h *HistoryStore) LoadVersion(id, filename string) (*Page, error) {
 	if id == "" {
 		return nil, fmt.Errorf("IDが空です")
 	}
-	if !strings.HasSuffix(filename, ".md") {
+	if !validHistoryFile.MatchString(filename) {
 		return nil, fmt.Errorf("不正なファイル名です: %s", filename)
 	}
-	base := strings.TrimSuffix(filename, ".md")
-	ms, perr := strconv.ParseInt(base, 10, 64)
-	if perr != nil {
+	ms, ok := parseHistoryTimestamp(filename)
+	if !ok {
 		return nil, fmt.Errorf("不正なファイル名です: %s", filename)
 	}
 
