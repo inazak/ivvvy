@@ -1,0 +1,19 @@
+{{template "layout" .}}
+{{define "content"}}
+<section>
+  <h1><a href="/tags/{{.Tag}}" class="tag-chip tag-chip-large">{{.Tag}}</a></h1>
+  {{if .Pages}}
+  <ul class="page-list">
+    {{range .Pages}}
+    <li>
+      <span class="page-id-small">{{.ID}}</span>
+      <a href="/page/{{.ID}}">{{.Title}}</a>
+      <time>{{.UpdatedAt.Format "2006-01-02 15:04"}}</time>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="empty">No pages with this tag.</p>
+  {{end}}
+</section>
+{{end}}

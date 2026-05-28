@@ -144,7 +144,7 @@
       .catch(function(err) {
         var el = document.getElementById('cy');
         if (el) {
-          el.innerHTML = '<p style="padding:1rem;color:#a00">グラフデータの取得に失敗しました: '
+          el.innerHTML = '<p style="padding:1rem;color:#a00">' + window.IVVVY_I18N.graphDataFailed + ': '
             + (err && err.message ? err.message : err) + '</p>';
         }
       });

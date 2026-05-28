@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/inazak/ivvvy/internal/i18n"
 	"github.com/inazak/ivvvy/internal/page"
 	"github.com/inazak/ivvvy/internal/search"
 )
@@ -78,12 +79,12 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handlePageList(w http.ResponseWriter, r *http.Request) {
 	pages, err := s.store.List()
 	if err != nil {
-		http.Error(w, "ページ一覧の取得に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrPageListFailed, http.StatusInternalServerError)
 		return
 	}
 
 	s.render(w, "list.html", TemplateData{
-		Title: "全ページ一覧",
+		Title: i18n.Get().AllPages,
 		Pages: pages,
 	})
 }
@@ -104,7 +105,7 @@ func (s *Server) handlePageView(w http.ResponseWriter, r *http.Request) {
 
 	html, err := s.renderer.Render([]byte(p.Body))
 	if err != nil {
-		http.Error(w, "Markdownの変換に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrMarkdownFailed, http.StatusInternalServerError)
 		return
 	}
 
@@ -126,12 +127,12 @@ func (s *Server) handlePageEdit(w http.ResponseWriter, r *http.Request) {
 
 	p, err := s.store.Get(id)
 	if err != nil {
-		http.Error(w, "ページが見つかりません", http.StatusNotFound)
+		http.Error(w, i18n.Get().ErrPageNotFound, http.StatusNotFound)
 		return
 	}
 
 	s.render(w, "edit.html", TemplateData{
-		Title:   p.Title + " - 編集",
+		Title:   p.Title + i18n.Get().EditSuffix,
 		Page:    p,
 		RawBody: p.Body,
 		IsNew:   false,
@@ -144,7 +145,7 @@ func (s *Server) handlePageNew(w http.ResponseWriter, r *http.Request) {
 	keyword := r.URL.Query().Get("title")
 
 	s.render(w, "edit.html", TemplateData{
-		Title: "新規ページ作成",
+		Title: i18n.Get().NewPage,
 		Page:  &page.Page{Title: keyword},
 		IsNew: true,
 	})
@@ -157,19 +158,19 @@ func (s *Server) handlePageHistory(w http.ResponseWriter, r *http.Request) {
 
 	p, err := s.store.Get(id)
 	if err != nil {
-		http.Error(w, "ページが見つかりません", http.StatusNotFound)
+		http.Error(w, i18n.Get().ErrPageNotFound, http.StatusNotFound)
 		return
 	}
 
 	versions, err := s.store.History().ListVersions(id)
 	if err != nil {
 		log.Printf("履歴一覧の取得に失敗: %v", err)
-		http.Error(w, "履歴一覧の取得に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrHistoryListFailed, http.StatusInternalServerError)
 		return
 	}
 
 	s.render(w, "page_history.html", TemplateData{
-		Title:    p.Title + " - 変更履歴",
+		Title:    p.Title + i18n.Get().HistorySuffix,
 		Page:     p,
 		Versions: versions,
 	})
@@ -184,13 +185,13 @@ func (s *Server) handlePageVersionView(w http.ResponseWriter, r *http.Request) {
 	p, err := s.store.History().LoadVersion(id, filename)
 	if err != nil {
 		// セキュリティ上、「不正なファイル名」「読み込み失敗」のどちらも 404 として返す。
-		http.Error(w, "履歴ファイルが見つかりません", http.StatusNotFound)
+		http.Error(w, i18n.Get().ErrHistoryNotFound, http.StatusNotFound)
 		return
 	}
 
 	html, err := s.renderer.Render([]byte(p.Body))
 	if err != nil {
-		http.Error(w, "Markdownの変換に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrMarkdownFailed, http.StatusInternalServerError)
 		return
 	}
 
@@ -216,7 +217,7 @@ func (s *Server) handleTagList(w http.ResponseWriter, r *http.Request) {
 	})
 
 	s.render(w, "tags.html", TemplateData{
-		Title:     "タグ一覧",
+		Title:     i18n.Get().TagList,
 		TagCounts: tagCounts,
 	})
 }
@@ -233,7 +234,7 @@ func (s *Server) handleTagView(w http.ResponseWriter, r *http.Request) {
 	pages := s.store.ListByTag(tag)
 
 	s.render(w, "tag_pages.html", TemplateData{
-		Title: "タグ: " + tag,
+		Title: i18n.Get().TagPrefix + tag,
 		Tag:   tag,
 		Pages: pages,
 	})
@@ -242,13 +243,13 @@ func (s *Server) handleTagView(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSearchIndex(w http.ResponseWriter, r *http.Request) {
 	pages, err := s.store.List()
 	if err != nil {
-		http.Error(w, "インデックスの生成に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrIndexFailed, http.StatusInternalServerError)
 		return
 	}
 
 	data, err := search.BuildIndex(pages)
 	if err != nil {
-		http.Error(w, "インデックスの生成に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrIndexFailed, http.StatusInternalServerError)
 		return
 	}
 
@@ -269,12 +270,12 @@ type apiRequest struct {
 func (s *Server) handleAPIPageCreate(w http.ResponseWriter, r *http.Request) {
 	var req apiRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "リクエストの解析に失敗しました", http.StatusBadRequest)
+		http.Error(w, i18n.Get().ErrRequestParse, http.StatusBadRequest)
 		return
 	}
 
 	if req.Title == "" {
-		http.Error(w, "タイトルは必須です", http.StatusBadRequest)
+		http.Error(w, i18n.Get().ErrTitleRequired, http.StatusBadRequest)
 		return
 	}
 
@@ -284,12 +285,12 @@ func (s *Server) handleAPIPageCreate(w http.ResponseWriter, r *http.Request) {
 
 	// ディレクトリトラバーサル防止
 	if strings.Contains(req.ID, "/") || strings.Contains(req.ID, "\\") || strings.Contains(req.ID, "..") {
-		http.Error(w, "IDに不正な文字が含まれています", http.StatusBadRequest)
+		http.Error(w, i18n.Get().ErrInvalidID, http.StatusBadRequest)
 		return
 	}
 
 	if _, err := s.store.Get(req.ID); err == nil {
-		http.Error(w, "同じIDのページがすでに存在します", http.StatusConflict)
+		http.Error(w, i18n.Get().ErrDuplicateID, http.StatusConflict)
 		return
 	}
 
@@ -303,7 +304,7 @@ func (s *Server) handleAPIPageCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.store.Save(p); err != nil {
-		http.Error(w, "ページの保存に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrSaveFailed, http.StatusInternalServerError)
 		return
 	}
 
@@ -319,13 +320,13 @@ func (s *Server) handleAPIPageUpdate(w http.ResponseWriter, r *http.Request) {
 
 	var req apiRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "リクエストの解析に失敗しました", http.StatusBadRequest)
+		http.Error(w, i18n.Get().ErrRequestParse, http.StatusBadRequest)
 		return
 	}
 
 	existing, err := s.store.Get(id)
 	if err != nil {
-		http.Error(w, "ページが見つかりません", http.StatusNotFound)
+		http.Error(w, i18n.Get().ErrPageNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -337,7 +338,7 @@ func (s *Server) handleAPIPageUpdate(w http.ResponseWriter, r *http.Request) {
 	existing.UpdatedAt = time.Now()
 
 	if err := s.store.Save(existing); err != nil {
-		http.Error(w, "ページの保存に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrSaveFailed, http.StatusInternalServerError)
 		return
 	}
 
@@ -352,12 +353,12 @@ func (s *Server) handleAPIPageDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	if _, err := s.store.Get(id); err != nil {
-		http.Error(w, "ページが見つかりません", http.StatusNotFound)
+		http.Error(w, i18n.Get().ErrPageNotFound, http.StatusNotFound)
 		return
 	}
 
 	if err := s.store.Delete(id); err != nil {
-		http.Error(w, "ページの削除に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrDeleteFailed, http.StatusInternalServerError)
 		return
 	}
 
@@ -370,7 +371,7 @@ func (s *Server) handleAPIPageRaw(w http.ResponseWriter, r *http.Request) {
 
 	p, err := s.store.Get(id)
 	if err != nil {
-		http.Error(w, "ページが見つかりません", http.StatusNotFound)
+		http.Error(w, i18n.Get().ErrPageNotFound, http.StatusNotFound)
 		return
 	}
 
@@ -388,13 +389,13 @@ func (s *Server) handleAPIPreview(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "リクエストの解析に失敗しました", http.StatusBadRequest)
+		http.Error(w, i18n.Get().ErrRequestParse, http.StatusBadRequest)
 		return
 	}
 
 	html, err := s.renderer.Render([]byte(req.Body))
 	if err != nil {
-		http.Error(w, "Markdownの変換に失敗しました", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrMarkdownFailed, http.StatusInternalServerError)
 		return
 	}
 
@@ -406,7 +407,7 @@ func (s *Server) handleAPIPreview(w http.ResponseWriter, r *http.Request) {
 // 描画ライブラリ（cytoscape.js）はクライアント側で /api/graph.json を取得して描画する。
 func (s *Server) handleGraphView(w http.ResponseWriter, r *http.Request) {
 	s.render(w, "graph.html", TemplateData{
-		Title: "グラフビュー",
+		Title: i18n.Get().GraphView,
 	})
 }
 
@@ -471,14 +472,14 @@ func (s *Server) render(w http.ResponseWriter, name string, data TemplateData) {
 	tmpl, err := s.getTemplate(name)
 	if err != nil {
 		log.Printf("テンプレートの読み込みに失敗: %v", err)
-		http.Error(w, "内部エラー", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrInternal, http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := tmpl.ExecuteTemplate(w, "layout", data); err != nil {
 		log.Printf("テンプレートのレンダリングに失敗: %v", err)
-		http.Error(w, "内部エラー", http.StatusInternalServerError)
+		http.Error(w, i18n.Get().ErrInternal, http.StatusInternalServerError)
 	}
 }
 

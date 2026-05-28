@@ -45,7 +45,7 @@ function initEditor(isNew) {
 
   if (deleteBtn) {
     deleteBtn.addEventListener('click', function() {
-      if (confirm('このページを削除してよろしいですか？')) {
+      if (confirm(window.IVVVY_I18N.confirmDelete)) {
         deletePage();
       }
     });
@@ -192,7 +192,7 @@ function savePage(isNew) {
     window.location.href = '/page/' + (result.id || id);
   })
   .catch(function(err) {
-    alert('保存に失敗しました: ' + err.message);
+    alert(window.IVVVY_I18N.saveFailed + ': ' + err.message);
   });
 }
 
@@ -212,7 +212,7 @@ function deletePage() {
     window.location.href = '/';
   })
   .catch(function(err) {
-    alert('削除に失敗しました: ' + err.message);
+    alert(window.IVVVY_I18N.deleteFailed + ': ' + err.message);
   });
 }
 
@@ -222,7 +222,7 @@ function deletePage() {
 function updatePreview(markdown, previewEl) {
   if (!previewEl) return;
   if (!markdown) {
-    previewEl.innerHTML = '<p style="color:#999">プレビューがここに表示されます</p>';
+    previewEl.innerHTML = '<p style="color:#999">' + window.IVVVY_I18N.previewPlaceholder + '</p>';
     return;
   }
 
@@ -237,6 +237,6 @@ function updatePreview(markdown, previewEl) {
     previewEl.innerHTML = '<div class="page-content">' + data.html + '</div>';
   })
   .catch(function(err) {
-    previewEl.innerHTML = '<p style="color:red">プレビューの取得に失敗しました</p>';
+    previewEl.innerHTML = '<p style="color:red">' + window.IVVVY_I18N.previewFailed + '</p>';
   });
 }

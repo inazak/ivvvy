@@ -1,0 +1,57 @@
+{{template "layout" .}}
+{{define "content"}}
+<div class="editor-container">
+  <h1>{{if .IsNew}}New Page{{else}}{{.Page.Title}} - Edit{{end}}</h1>
+
+  <form id="page-form">
+    {{if not .IsNew}}
+    <input type="hidden" id="page-id" value="{{.Page.ID}}">
+    {{end}}
+
+    <div class="form-group">
+      <label for="page-title">Title</label>
+      <input type="text" id="page-title" name="title" required
+             value="{{.Page.Title}}" placeholder="Page title">
+    </div>
+
+    <div class="form-group">
+      <label>Tags</label>
+      <div class="tag-input-container" id="tag-input-container">
+        <input type="text" id="tag-input" placeholder="Add tag..." autocomplete="off">
+      </div>
+      <div class="tag-suggestions" id="tag-suggestions"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Body (Markdown)</label>
+      <div class="tab-header">
+        <button type="button" class="tab-btn active" data-tab="edit">Edit</button>
+        <button type="button" class="tab-btn" data-tab="preview">Preview</button>
+      </div>
+      <div id="tab-edit" class="tab-content active">
+        <textarea id="page-body" name="body" rows="20"
+                  placeholder="Write in Markdown...">{{.RawBody}}</textarea>
+      </div>
+      <div id="tab-preview" class="tab-content">
+        <div id="preview" class="preview-pane"></div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Save</button>
+      {{if not .IsNew}}
+      <a href="/page/{{.Page.ID}}" class="btn">Cancel</a>
+      <button type="button" id="delete-btn" class="btn btn-danger">Delete</button>
+      {{else}}
+      <a href="/" class="btn">Cancel</a>
+      {{end}}
+    </div>
+  </form>
+</div>
+
+<script src="/static/js/editor.js"></script>
+<script>
+  var initialTags = {{json .Page.Tags}} || [];
+  initEditor({{.IsNew}});
+</script>
+{{end}}

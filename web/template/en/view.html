@@ -1,0 +1,47 @@
+{{template "layout" .}}
+{{define "content"}}
+<article>
+  {{if .IsVersionView}}
+  <div class="version-banner">
+    This is the version from <strong>{{.VersionTimestamp.Format "2006-01-02 15:04:05"}}</strong>.
+    <a href="/page/{{.Page.ID}}">Back to latest</a>
+  </div>
+  {{end}}
+
+  <header class="page-header">
+    <div class="page-meta">
+      <span class="page-id">ID:{{.Page.ID}}</span>
+      <span class="page-meta-title">Title:{{.Page.Title}}</span>
+      <time>Update:{{.Page.UpdatedAt.Format "2006/01/02"}}</time>
+      {{if and (not .IsStatic) (not .IsVersionView)}}
+      <a href="/page/{{.Page.ID}}/history" class="history-link">History</a>
+      <a href="/page/{{.Page.ID}}/edit" class="btn btn-edit">Edit</a>
+      {{end}}
+    </div>
+    {{if .Page.Tags}}
+    <div class="page-tags">
+      {{range .Page.Tags}}
+      <a href="/tags/{{.}}" class="tag-chip">{{.}}</a>
+      {{end}}
+    </div>
+    {{end}}
+  </header>
+
+  <div class="page-content">
+    {{safeHTML .Content}}
+  </div>
+
+  {{if .BacklinkPages}}
+  <section class="backlink-pages">
+    <h2>Pages linking here</h2>
+    <ul class="page-list">
+      {{range .BacklinkPages}}
+      <li>
+        <a href="/page/{{.ID}}">{{.Title}}</a>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+</article>
+{{end}}
