@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/inazak/ivvvy/internal/i18n"
 	"github.com/inazak/ivvvy/internal/markdown"
 	"github.com/inazak/ivvvy/internal/page"
 	"github.com/inazak/ivvvy/internal/search"
@@ -83,7 +84,7 @@ func (g *Generator) Run() error {
 	}
 
 	if err := g.renderToFile("list.html", filepath.Join("pages", "index.html"), server.TemplateData{
-		Title:    "全ページ一覧",
+		Title:    i18n.Get().AllPages,
 		Pages:    pages,
 		IsStatic: true,
 	}); err != nil {
@@ -129,7 +130,7 @@ func (g *Generator) generatePage(p *page.Page, allPages []*page.Page) error {
 // HTMLはクライアント側で /api/graph.json をfetchして cytoscape.js で描画する仕組み。
 func (g *Generator) generateGraphPage() error {
 	if err := g.renderToFile("graph.html", filepath.Join("graph", "index.html"), server.TemplateData{
-		Title:    "グラフビュー",
+		Title:    i18n.Get().GraphView,
 		IsStatic: true,
 	}); err != nil {
 		return err
@@ -178,7 +179,7 @@ func (g *Generator) generateTagPages() error {
 	})
 
 	if err := g.renderToFile("tags.html", filepath.Join("tags", "index.html"), server.TemplateData{
-		Title:     "タグ一覧",
+		Title:     i18n.Get().TagList,
 		TagCounts: tagCounts,
 		IsStatic:  true,
 	}); err != nil {
@@ -188,7 +189,7 @@ func (g *Generator) generateTagPages() error {
 	for _, tc := range tagCounts {
 		pages := g.store.ListByTag(tc.Name)
 		if err := g.renderToFile("tag_pages.html", filepath.Join("tags", tc.Name, "index.html"), server.TemplateData{
-			Title:    "タグ: " + tc.Name,
+			Title:    i18n.Get().TagPrefix + tc.Name,
 			Tag:      tc.Name,
 			Pages:    pages,
 			IsStatic: true,

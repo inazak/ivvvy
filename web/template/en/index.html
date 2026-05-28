@@ -1,0 +1,26 @@
+{{template "layout" .}}
+{{define "content"}}
+<div class="search-hero">
+  <h1 class="search-logo">ivvvy</h1>
+  <div class="search-container">
+    <input type="text" id="search-input" placeholder="Search pages..." autocomplete="off">
+    <div id="search-results"></div>
+  </div>
+</div>
+
+<script src="/static/js/search.js"></script>
+<script>
+  (function() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('focus') === 'search') {
+        var input = document.getElementById('search-input');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }
+    } catch (e) {}
+  })();
+</script>
+{{end}}

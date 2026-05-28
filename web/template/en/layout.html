@@ -1,14 +1,12 @@
 {{define "layout"}}
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{.Title}}</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <script>
-    // FOUC（Flash of Unstyled Content）防止用インラインスクリプト。
-    // CSS の読み込みより先に data-textsize / data-theme 属性を設定する。
     (function(){
       try {
         var s = localStorage.getItem('ivvvy.textsize');
@@ -18,19 +16,30 @@
       } catch(e){}
     })();
   </script>
+  <script>
+    window.IVVVY_I18N = {
+      confirmDelete: "Are you sure you want to delete this page?",
+      saveFailed: "Save failed",
+      deleteFailed: "Delete failed",
+      previewPlaceholder: "Preview will appear here",
+      previewFailed: "Failed to load preview",
+      searchIndexFailed: "Failed to load search index",
+      graphDataFailed: "Failed to load graph data"
+    };
+  </script>
 </head>
 <body>
   <header>
     <nav>
       <a href="/" class="logo">ivvvy</a>
       <div class="nav-links">
-        <a href="/pages">ページ</a>
-        <a href="/tags">タグ</a>
-        <a href="/graph">グラフ</a>
-        {{if not .IsStatic}}<a href="/new">新規作成</a>{{end}}
+        <a href="/pages">Pages</a>
+        <a href="/tags">Tags</a>
+        <a href="/graph">Graph</a>
+        {{if not .IsStatic}}<a href="/new">New</a>{{end}}
         <div class="textsize-wrap">
           <button type="button" id="textsize-toggle" class="toolbar-btn"
-                  aria-label="テキストサイズ切替">
+                  aria-label="Toggle text size">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -40,22 +49,20 @@
             </svg>
           </button>
           <div class="textsize-popup" role="menu">
-            <button data-size="large" type="button">大</button>
-            <button data-size="normal" type="button">標準</button>
-            <button data-size="small" type="button">小</button>
+            <button data-size="large" type="button">L</button>
+            <button data-size="normal" type="button">M</button>
+            <button data-size="small" type="button">S</button>
           </div>
         </div>
         <div class="theme-wrap">
           <button type="button" id="theme-toggle" class="toolbar-btn"
-                  aria-label="ライト/ダークモード切替">
-            <!-- ライトモード時に表示する月アイコン（押すとダークモードへ） -->
+                  aria-label="Toggle light/dark mode">
             <svg class="theme-icon-moon" xmlns="http://www.w3.org/2000/svg"
                  width="18" height="18" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
-            <!-- ダークモード時に表示する太陽アイコン（押すとライトモードへ） -->
             <svg class="theme-icon-sun" xmlns="http://www.w3.org/2000/svg"
                  width="18" height="18" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2"
@@ -74,7 +81,7 @@
         </div>
         <div class="shortcuts-wrap">
           <button type="button" id="shortcuts-toggle" class="shortcuts-toggle"
-                  aria-label="キーボードショートカット切替" aria-pressed="true">
+                  aria-label="Toggle keyboard shortcuts" aria-pressed="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -90,25 +97,25 @@
           </button>
           <div class="shortcuts-tooltip" role="tooltip" aria-hidden="true">
             <div class="shortcuts-tooltip-status">
-              現在: <span id="shortcuts-status">ON</span>
-              <span class="shortcuts-tooltip-hint">（クリックで切替）</span>
+              Status: <span id="shortcuts-status">ON</span>
+              <span class="shortcuts-tooltip-hint">(click to toggle)</span>
             </div>
             <table class="shortcuts-tooltip-table">
               <tbody>
-                <tr><th colspan="2">ナビゲーション</th></tr>
-                <tr><td><kbd>g</kbd> <kbd>p</kbd></td><td>ページ</td></tr>
-                <tr><td><kbd>g</kbd> <kbd>r</kbd></td><td>グラフ</td></tr>
-                <tr><td><kbd>g</kbd> <kbd>n</kbd></td><td>新規作成</td></tr>
-                <tr><td><kbd>g</kbd> <kbd>i</kbd></td><td>トップ（検索フォーカス）</td></tr>
-                <tr><th colspan="2">ページ操作</th></tr>
-                <tr><td><kbd>e</kbd></td><td>編集</td></tr>
-                <tr><th colspan="2">スクロール</th></tr>
-                <tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>大きく下／上</td></tr>
-                <tr><td><kbd>g</kbd> <kbd>g</kbd></td><td>ページ先頭</td></tr>
-                <tr><td><kbd>G</kbd></td><td>ページ末尾</td></tr>
+                <tr><th colspan="2">Navigation</th></tr>
+                <tr><td><kbd>g</kbd> <kbd>p</kbd></td><td>Pages</td></tr>
+                <tr><td><kbd>g</kbd> <kbd>r</kbd></td><td>Graph</td></tr>
+                <tr><td><kbd>g</kbd> <kbd>n</kbd></td><td>New</td></tr>
+                <tr><td><kbd>g</kbd> <kbd>i</kbd></td><td>Home (focus search)</td></tr>
+                <tr><th colspan="2">Page actions</th></tr>
+                <tr><td><kbd>e</kbd></td><td>Edit</td></tr>
+                <tr><th colspan="2">Scroll</th></tr>
+                <tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>Scroll down / up</td></tr>
+                <tr><td><kbd>g</kbd> <kbd>g</kbd></td><td>Top of page</td></tr>
+                <tr><td><kbd>G</kbd></td><td>Bottom of page</td></tr>
               </tbody>
             </table>
-            <div class="shortcuts-tooltip-note">編集画面では無効になります</div>
+            <div class="shortcuts-tooltip-note">Disabled in edit mode</div>
           </div>
         </div>
       </div>

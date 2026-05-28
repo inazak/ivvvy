@@ -1,0 +1,29 @@
+{{template "layout" .}}
+{{define "content"}}
+<section>
+  <header class="page-header">
+    <div class="page-meta">
+      <span class="page-id">ID:{{.Page.ID}}</span>
+      <span class="page-meta-title">Title:{{.Page.Title}}</span>
+      <a href="/page/{{.Page.ID}}" class="history-link">Back to latest</a>
+    </div>
+  </header>
+
+  <h1>History</h1>
+
+  {{if .Versions}}
+  <ul class="version-list">
+    {{range .Versions}}
+    <li>
+      <a href="/page/{{$.Page.ID}}/history/{{.FileName}}">
+        {{.Timestamp.Format "2006-01-02 15:04:05"}}
+      </a>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="empty">No previous versions for this page.<br>
+    (The page has not been edited since its creation, or there are no changes since the initial save.)</p>
+  {{end}}
+</section>
+{{end}}

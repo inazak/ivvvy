@@ -21,7 +21,7 @@
       searchIndex = data;
     })
     .catch(function(err) {
-      console.error('検索インデックスの読み込みに失敗:', err);
+      console.error(window.IVVVY_I18N.searchIndexFailed + ':', err);
     });
 
   // 検索窓に入力があるたびに検索を実行する（300ms のデバウンス付き）
