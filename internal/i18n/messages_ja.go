@@ -1,4 +1,4 @@
-//go:build lang_ja
+//go:build !lang_en
 
 package i18n
 
