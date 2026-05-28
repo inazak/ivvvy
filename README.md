@@ -64,7 +64,13 @@ Markdown形式のフラットファイルをブラウザ上で閲覧・編集・
 ## ビルド
 
 ```bash
+# 日本語UI（デフォルト）
 go build -o ivvvy .
+
+# 英語UI
+go build -tags lang_en -o ivvvy .
+
+# テスト
 go test ./internal/... -v
 ```
 
