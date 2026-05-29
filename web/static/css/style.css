@@ -344,7 +344,7 @@ a:hover {
   line-height: 2.0;
 }
 
-.page-content > *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6) {
+.page-content > *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(hr) {
   margin-left: 1em;
 }
 
